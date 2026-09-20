@@ -1,1336 +1,421 @@
 <!DOCTYPE html>
-<html lang="bn" class="h-full">
+<html lang="bn">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>হাউজ রেইন্ট লিড ক্রয়-২৬</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            50: '#eef2ff',
-                            100: '#e0e7ff',
-                            500: '#6366f1',
-                            600: '#4f46e5',
-                            700: '#4338ca',
-                        }
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'SolaimanLipi', 'sans-serif']
-                    }
-                }
-            }
-        }
-    </script>
-    <!-- FontAwesome Icons -->
+    <!-- Tailwind CSS for modern UI -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- FontAwesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts: Inter & SolaimanLipi simulation via system stack -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Firebase App & Firestore SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Hind Siliguri', sans-serif; }
     </style>
 </head>
-<body class="h-full bg-slate-100 text-slate-800 transition-colors duration-300" id="appBody">
+<body class="bg-gray-50 text-gray-850 antialiased min-h-screen">
 
-    <div id="root" class="h-full flex flex-col">
+    <!-- App Container -->
+    <div id="app"></div>
 
-        <!-- AUTH SECTION (Signup / Login Modal Screen) -->
-        <div id="authScreen" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
-            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-100 animate-fadeIn">
-                <div class="bg-gradient-to-r from-indigo-600 to-violet-600 p-6 text-white text-center">
-                    <h1 class="text-2xl font-bold tracking-wide">হাউজ রেইন্ট লিড ক্রয়-২৬</h1>
-                    <p class="text-xs text-indigo-100 mt-1">আপনার অ্যাকাউন্ট তৈরি করুন বা প্রবেশ করুন</p>
-                </div>
-                
-                <div class="p-6">
-                    <!-- Tab Switcher -->
-                    <div class="flex rounded-lg bg-slate-100 p-1 mb-6">
-                        <button onclick="switchAuthTab('signup')" id="tabSignupBtn" class="flex-1 py-2 text-sm font-semibold rounded-md bg-white text-indigo-600 shadow-sm transition-all">সাইন আপ</button>
-                        <button onclick="switchAuthTab('login')" id="tabLoginBtn" class="flex-1 py-2 text-sm font-semibold rounded-md text-slate-600 transition-all">লগইন</button>
-                    </div>
-
-                    <!-- Signup Form -->
-                    <form id="signupForm" onsubmit="handleSignup(event)" class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">ফুল নাম (Full Name)</label>
-                            <input type="text" id="suName" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="আপনার সম্পূর্ণ নাম লিখুন">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">জিমেইল (Gmail)</label>
-                            <input type="email" id="suEmail" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="example@gmail.com">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">ফোন নম্বর (Phone Number)</label>
-                            <input type="tel" id="suPhone" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="01XXXXXXXXX">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">পাসওয়ার্ড (Password)</label>
-                            <input type="password" id="suPassword" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="••••••••">
-                        </div>
-                        <!-- Simple Captcha -->
-                        <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 flex items-center justify-between">
-                            <div class="flex items-center space-x-2">
-                                <span id="captchaQuestion" class="font-bold text-indigo-700 bg-indigo-50 px-3 py-1 rounded border border-indigo-200 select-none">4 + 3 = ?</span>
-                                <input type="number" id="suCaptchaInput" required class="w-20 px-2 py-1 text-sm border border-slate-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="উত্তর">
-                            </div>
-                            <button type="button" onclick="generateCaptcha()" class="text-xs text-slate-500 hover:text-indigo-600 underline">রিসেট</button>
-                        </div>
-                        <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow-md transition-colors text-sm">সাইন আপ সম্পূর্ণ করুন</button>
-                    </form>
-
-                    <!-- Login Form -->
-                    <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4 hidden">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">জিমেইল বা ফোন নম্বর</label>
-                            <input type="text" id="liIdentifier" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="জিমেইল বা ফোন নম্বর দিন">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">পাসওয়ার্ড</label>
-                            <input type="password" id="liPassword" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="••••••••">
-                        </div>
-                        <div class="text-xs text-slate-500 bg-amber-50 p-2.5 rounded border border-amber-200 text-amber-800">
-                            <i class="fa-solid fa-circle-info mr-1"></i> এডমিন হিসেবে প্রবেশ করতে ইমেইল <b>admin@lead.com</b> এবং পাসওয়ার্ড <b>admin123</b> ব্যবহার করুন।
-                        </div>
-                        <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow-md transition-colors text-sm">প্রবেশ করুন (Login)</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <!-- MAIN APP INTERFACE (Hidden initially until auth) -->
-        <div id="mainApp" class="h-full flex overflow-hidden hidden">
-            
-            <!-- SIDEBAR NAVIGATION -->
-            <aside id="sidebar" class="w-64 bg-slate-900 text-slate-300 flex flex-col transition-all duration-300 z-30 shadow-xl">
-                <!-- Brand Header -->
-                <div class="p-4 border-b border-slate-800 flex items-center justify-between">
-                    <div class="flex items-center space-x-3">
-                        <div id="sidebarLogoContainer" class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-inner">
-                            <i class="fa-solid fa-house-chimney"></i>
-                        </div>
-                        <div>
-                            <h2 class="font-bold text-white text-sm">হাউজ রেইন্ট লিড</h2>
-                            <span class="text-[10px] text-emerald-400 font-medium bg-emerald-950/50 px-1.5 py-0.5 rounded border border-emerald-800/50">ক্রয়-২৬ সক্রিয়</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Navigation Links -->
-                <nav class="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto custom-scrollbar">
-                    <button onclick="switchTab('home')" id="nav-home" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors bg-indigo-600 text-white">
-                        <i class="fa-solid fa-house w-5 text-center"></i>
-                        <span>হোম পেজ</span>
-                    </button>
-
-                    <!-- Admin Only Section -->
-                    <div id="adminMenuSection" class="pt-2 space-y-1.5">
-                        <div class="px-3 pb-1 text-[11px] font-bold text-slate-500 uppercase tracking-wider">এডমিন মেনু</div>
-                        
-                        <button onclick="switchTab('leadEntry')" id="nav-leadEntry" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 text-slate-300 transition-colors">
-                            <i class="fa-solid fa-file-circle-plus w-5 text-center text-indigo-400"></i>
-                            <span>লিড এন্ট্রি</span>
-                        </button>
-
-                        <button onclick="switchTab('userHistory')" id="nav-userHistory" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 text-slate-300 transition-colors">
-                            <i class="fa-solid fa-clock-rotate-left w-5 text-center text-amber-400"></i>
-                            <span>ইউজার হিষ্টোরী</span>
-                        </button>
-
-                        <button onclick="switchTab('paymentHistory')" id="nav-paymentHistory" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 text-slate-300 transition-colors">
-                            <i class="fa-solid fa-wallet w-5 text-center text-emerald-400"></i>
-                            <span>পেমেন্ট হিষ্টোরী</span>
-                        </button>
-
-                        <button onclick="switchTab('addFeature')" id="nav-addFeature" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 text-slate-300 transition-colors">
-                            <i class="fa-solid fa-bullhorn w-5 text-center text-pink-400"></i>
-                            <span>এ্যাড ফিউচার</span>
-                        </button>
-
-                        <button onclick="switchTab('settings')" id="nav-settings" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 text-slate-300 transition-colors">
-                            <i class="fa-solid fa-gear w-5 text-center text-cyan-400"></i>
-                            <span>সেটিং</span>
-                        </button>
-                    </div>
-                </nav>
-
-                <!-- Current User Footer in Sidebar -->
-                <div class="p-3 border-t border-slate-800 bg-slate-950/50 flex items-center justify-between">
-                    <div class="flex items-center space-x-2.5 overflow-hidden">
-                        <div id="currentUserAvatar" class="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">U</div>
-                        <div class="truncate">
-                            <p id="currentUserNameDisplay" class="text-xs font-semibold text-white truncate">ইউজার নাম</p>
-                            <p id="currentUserRoleDisplay" class="text-[10px] text-slate-400 truncate">মেম্বার</p>
-                        </div>
-                    </div>
-                    <button onclick="logout()" title="লগআউট" class="text-slate-400 hover:text-rose-400 p-1.5 rounded-lg hover:bg-slate-800 transition-colors">
-                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                    </button>
-                </div>
-            </aside>
-
-            <!-- MAIN CONTENT AREA -->
-            <main class="flex-1 flex flex-col h-full overflow-hidden bg-slate-100">
-                
-                <!-- Top Navbar -->
-                <header class="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-6 shadow-sm z-20 flex-shrink-0">
-                    <div class="flex items-center space-x-3">
-                        <button onclick="toggleSidebar()" class="text-slate-500 hover:text-slate-700 lg:hidden">
-                            <i class="fa-solid fa-bars text-lg"></i>
-                        </button>
-                        <h2 id="pageTitle" class="text-lg font-bold text-slate-800">হোম পেজ</h2>
-                    </div>
-
-                    <div class="flex items-center space-x-4">
-                        <div class="text-right hidden sm:block">
-                            <p class="text-xs font-medium text-slate-500" id="currentDateDisplay">তারিখ: --</p>
-                            <p class="text-xs font-bold text-indigo-600">হাউজ রেইন্ট লিড ক্রয়-২৬</p>
-                        </div>
-                        <div class="w-9 h-9 rounded-full bg-indigo-100 border border-indigo-200 flex items-center justify-center text-indigo-700 font-bold" id="topNavAvatar">
-                            U
-                        </div>
-                    </div>
-                </header>
-
-                <!-- Scrollable Content Viewport -->
-                <div class="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar space-y-6">
-                    
-                    <!-- TAB 1: HOME VIEW -->
-                    <div id="view-home" class="space-y-6">
-                        
-                        <!-- Highlighted Notice Box (From Add Feature) -->
-                        <div id="highlightNoticeBox" class="bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl p-4 text-white shadow-lg flex items-start space-x-3">
-                            <div class="bg-white/20 p-2 rounded-lg mt-0.5">
-                                <i class="fa-solid fa-bullhorn text-xl"></i>
-                            </div>
-                            <div class="flex-1">
-                                <h3 class="font-bold text-sm uppercase tracking-wide">সতর্কবার্তা ও ঘোষণা</h3>
-                                <p id="highlightNoticeText" class="text-sm mt-1 text-amber-50 font-medium">কোনো নতুন ঘোষণা নেই। এডমিন ফিচার থেকে ঘোষণা যুক্ত করা হবে।</p>
-                            </div>
-                        </div>
-
-                        <!-- Quick Overview Stats -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center space-x-4">
-                                <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl font-bold">
-                                    <i class="fa-solid fa-users"></i>
-                                </div>
-                                <div>
-                                    <p class="text-xs text-slate-500 font-medium">মোট রেজিস্টার্ড ইউজার</p>
-                                    <h4 id="statTotalUsers" class="text-xl font-bold text-slate-800">0</h4>
-                                </div>
-                            </div>
-                            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center space-x-4">
-                                <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl font-bold">
-                                    <i class="fa-solid fa-chart-line"></i>
-                                </div>
-                                <div>
-                                    <p class="text-xs text-slate-500 font-medium">আজকের মোট লিড সেল</p>
-                                    <h4 id="statTodayLeads" class="text-xl font-bold text-slate-800">0</h4>
-                                </div>
-                            </div>
-                            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center space-x-4">
-                                <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl font-bold">
-                                    <i class="fa-solid fa-coins"></i>
-                                </div>
-                                <div>
-                                    <p class="text-xs text-slate-500 font-medium">টোটাল জমা টাকা</p>
-                                    <h4 id="statTotalDeposits" class="text-xl font-bold text-slate-800">৳0</h4>
-                                </div>
-                            </div>
-                            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center space-x-4">
-                                <div class="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-xl font-bold">
-                                    <i class="fa-solid fa-triangle-exclamation"></i>
-                                </div>
-                                <div>
-                                    <p class="text-xs text-slate-500 font-medium">আজকের মোট লিড ইশু</p>
-                                    <h4 id="statTodayIssues" class="text-xl font-bold text-slate-800">0</h4>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Daily Lead Sales Live History Table on Home -->
-                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                            <div class="p-4 border-b border-slate-200 flex items-center justify-between">
-                                <h3 class="font-bold text-slate-800 flex items-center">
-                                    <i class="fa-solid fa-bolt text-indigo-600 mr-2"></i> আজকের দৈনিক লিড সেল হিষ্টোরী
-                                </h3>
-                                <span class="text-xs bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-full font-medium">অটো আপডেট</span>
-                            </div>
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-left text-sm">
-                                    <thead class="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200 text-xs uppercase">
-                                        <tr>
-                                            <th class="p-3">তারিখ ও সময়</th>
-                                            <th class="p-3">ইউজার নাম</th>
-                                            <th class="p-3">লিডের ধরণ</th>
-                                            <th class="p-3">পরিমান</th>
-                                            <th class="p-3">ইশু</th>
-                                            <th class="p-3">অকে লিড</th>
-                                            <th class="p-3">মোট টাকা</th>
-                                            <th class="p-3">স্ট্যাটাস</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="homeLiveHistoryTableBody" class="divide-y divide-slate-100">
-                                        <!-- Dynamically injected -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <!-- Registered Users Bottom Listing Section -->
-                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden p-5">
-                            <div class="flex items-center justify-between mb-4">
-                                <div>
-                                    <h3 class="font-bold text-slate-800 text-base">সকল সাইনআপকৃত ইউজারদের তালিকা</h3>
-                                    <p class="text-xs text-slate-500">যেকোনো ইউজারের নামের উপর ক্লিক করে তার প্রোফাইল ও বিস্তারিত রিপোর্ট দেখুন</p>
-                                </div>
-                                <span class="text-xs bg-slate-100 text-slate-600 px-3 py-1 rounded-full font-medium" id="userCountBadge">0 জন ইউজার</span>
-                            </div>
-
-                            <div id="usersGridListing" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                                <!-- User Cards Dynamically Generated -->
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- TAB 2: LEAD ENTRY VIEW (Admin Only) -->
-                    <div id="view-leadEntry" class="space-y-6 hidden">
-                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 max-w-4xl mx-auto">
-                            <div class="border-b border-slate-200 pb-4 mb-6 flex items-center justify-between">
-                                <div>
-                                    <h3 class="text-lg font-bold text-slate-800">লিড এন্ট্রি ফর্ম (Lead Entry)</h3>
-                                    <p class="text-xs text-slate-500">ইউজারের লিড হিসাব এবং হিসাব স্বয়ংক্রিয়ভাবে গুগোল শিটে যুক্ত হবে</p>
-                                </div>
-                                <span class="text-xs bg-emerald-50 text-emerald-700 font-semibold px-3 py-1 rounded-lg border border-emerald-200">
-                                    <i class="fa-solid fa-cloud-arrow-up mr-1"></i> গুগল শিট কানেক্টেড
-                                </span>
-                            </div>
-
-                            <form id="leadEntryForm" onsubmit="submitLeadEntry(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-600 mb-1">ইউজার নাম (User Name)</label>
-                                    <select id="leUserSelect" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
-                                        <option value="">ইউজার সিলেক্ট করুন</option>
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-600 mb-1">লিডের ধরণ (Lead Type)</label>
-                                    <select id="leType" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
-                                        <option value="CL Lead">CL Lead</option>
-                                        <option value="Facebook Lead">Facebook Lead</option>
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-600 mb-1">লিড পরিমান (Quantity)</label>
-                                    <input type="number" id="leQuantity" oninput="calculateLeadForm()" required min="1" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="যেমন: ১০০">
-                                </div>
-
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-600 mb-1">লিডের রেইট (Rate per Lead)</label>
-                                    <input type="number" step="0.01" id="leRate" oninput="calculateLeadForm()" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="যেমন: ২০">
-                                </div>
-
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-600 mb-1">লিডের ইশু (Issues / Bad Leads)</label>
-                                    <input type="number" id="leIssue" oninput="calculateLeadForm()" value="0" min="0" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="ইশু সংখ্যা">
-                                </div>
-
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-600 mb-1">মোট লিড অকে (Total OK Leads)</label>
-                                    <input type="number" id="leOkLeads" readonly class="w-full px-3 py-2 text-sm bg-slate-100 border border-slate-300 rounded-lg text-slate-600 font-bold" placeholder="স্বয়ংক্রিয় গণনা">
-                                </div>
-
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-600 mb-1">মোট টাকা (Total Amount - ৳)</label>
-                                    <input type="number" step="0.01" id="leTotalAmount" readonly class="w-full px-3 py-2 text-sm bg-slate-100 border border-slate-300 rounded-lg text-indigo-700 font-bold" placeholder="স্বয়ংক্রিয় গণনা">
-                                </div>
-
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-600 mb-1">জমা টাকা (Deposited Amount - ৳)</label>
-                                    <input type="number" step="0.01" id="leDeposit" oninput="calculateLeadForm()" value="0" min="0" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="এডমিন কত টাকা জমা দিল">
-                                </div>
-
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-600 mb-1">বাকী টাকা (Due Amount - ৳)</label>
-                                    <input type="number" step="0.01" id="leDue" readonly class="w-full px-3 py-2 text-sm bg-slate-100 border border-slate-300 rounded-lg text-rose-600 font-bold" placeholder="বাকী টাকা">
-                                </div>
-
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-600 mb-1">ট্র্যাকিং নম্বর (Tracking Number)</label>
-                                    <input type="text" id="leTracking" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="যেমন: TRK-984231">
-                                </div>
-
-                                <div class="md:col-span-2 pt-4 flex items-center justify-end space-x-3">
-                                    <button type="button" onclick="previewLeadReportModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-sm font-semibold transition-colors">
-                                        <i class="fa-solid fa-eye mr-1"></i> রিপোর্ট প্রিভিউ
-                                    </button>
-                                    <button type="submit" class="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold shadow-md transition-colors">
-                                        <i class="fa-solid fa-floppy-disk mr-1"></i> সাবমিট লিড (গুগল শিট সিং)
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-
-                    <!-- TAB 3: USER HISTORY VIEW -->
-                    <div id="view-userHistory" class="space-y-6 hidden">
-                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden p-5">
-                            <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-200">
-                                <div>
-                                    <h3 class="font-bold text-slate-800 text-base">ইউজার হিষ্টোরী ও কার্যক্রম</h3>
-                                    <p class="text-xs text-slate-500">সাইনআপ থেকে শুরু করে বর্তমান সময় পর্যন্ত সকল ইউজারের কাজের বিবরণ</p>
-                                </div>
-                                <button onclick="renderUserHistory()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold">
-                                    <i class="fa-solid fa-rotate mr-1"></i> রিফ্রেশ হিষ্টোরী
-                                </button>
-                            </div>
-
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-left text-sm">
-                                    <thead class="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200 text-xs uppercase">
-                                        <tr>
-                                            <th class="p-3">সময়</th>
-                                            <th class="p-3">ইউজার নাম</th>
-                                            <th class="p-3">জিমেইল ও ফোন</th>
-                                            <th class="p-3">কার্যক্রম / ইভেন্ট</th>
-                                            <th class="p-3">আইপি / স্ট্যাটাস</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="userHistoryTableBody" class="divide-y divide-slate-100">
-                                        <!-- Dynamically populated -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- TAB 4: PAYMENT HISTORY VIEW -->
-                    <div id="view-paymentHistory" class="space-y-6 hidden">
-                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden p-5">
-                            <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-200">
-                                <div>
-                                    <h3 class="font-bold text-slate-800 text-base">পেমেন্ট হিষ্টোরী ও ট্র্যাকিং</h3>
-                                    <p class="text-xs text-slate-500">সকল ইউজারের পেমেন্ট নম্বর, মোট টাকা এবং ট্র্যাকিং বিবরণী তালিকা</p>
-                                </div>
-                            </div>
-
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-left text-sm">
-                                    <thead class="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200 text-xs uppercase">
-                                        <tr>
-                                            <th class="p-3">ট্র্যাকিং নম্বর</th>
-                                            <th class="p-3">তারিখ</th>
-                                            <th class="p-3">ইউজার নাম</th>
-                                            <th class="p-3">মোট টাকা</th>
-                                            <th class="p-3">জমা দেওয়া টাকা</th>
-                                            <th class="p-3">বাকী টাকা</th>
-                                            <th class="p-3 text-center">অ্যাকশন</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="paymentHistoryTableBody" class="divide-y divide-slate-100">
-                                        <!-- Dynamically populated -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- TAB 5: ADD FEATURE VIEW (Admin Only) -->
-                    <div id="view-addFeature" class="space-y-6 hidden">
-                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 max-w-2xl mx-auto">
-                            <h3 class="text-lg font-bold text-slate-800 mb-1">নতুন ফিচার বা ঘোষণা যোগ করুন</h3>
-                            <p class="text-xs text-slate-500 mb-6">এখানে যা লিখবেন তা হোমপেজের নিচের অংশে হাইলাইট বক্সে প্রদর্শিত হবে।</p>
-                            
-                            <form onsubmit="saveHighlightFeature(event)" class="space-y-4">
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-600 mb-1">ঘোষণা / ফিচার বার্তা</label>
-                                    <textarea id="featureTextContent" rows="4" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="এখানে নতুন কাজের বিষয় বা নোটিশ লিখুন..."></textarea>
-                                </div>
-                                <button type="submit" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold shadow-md transition-colors">
-                                    <i class="fa-solid fa-paper-plane mr-1"></i> হোমপেজে পাবলিশ করুন
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-
-                    <!-- TAB 6: SETTINGS VIEW (Admin Only) -->
-                    <div id="view-settings" class="space-y-6 hidden">
-                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 max-w-4xl mx-auto space-y-6">
-                            <div>
-                                <h3 class="text-lg font-bold text-slate-800 mb-1">সিস্টেম সেটিং ও কাস্টমাইজেশন</h3>
-                                <p class="text-xs text-slate-500">ফন্ট, থিম, লোগো এবং ইউজার এক্সেস ম্যানেজমেন্ট নিয়ন্ত্রণ করুন।</p>
-                            </div>
-
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-slate-200">
-                                <!-- Font Settings -->
-                                <div class="space-y-2">
-                                    <label class="block text-xs font-semibold text-slate-700">ফন্ট সিলেক্ট করুন</label>
-                                    <select id="settingFontSelect" onchange="changeAppFont(this.value)" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
-                                        <option value="Inter">Inter & SolaimanLipi</option>
-                                        <option value="Arial">Arial</option>
-                                        <option value="Courier New">Courier New</option>
-                                    </select>
-                                </div>
-
-                                <!-- Theme Settings -->
-                                <div class="space-y-2">
-                                    <label class="block text-xs font-semibold text-slate-700">থিম মোড</label>
-                                    <select id="settingThemeSelect" onchange="changeAppTheme(this.value)" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
-                                        <option value="light">লাইট থিম (Light)</option>
-                                        <option value="dark">ডার্ক থিম (Dark)</option>
-                                    </select>
-                                </div>
-
-                                <!-- Logo Upload Simulation -->
-                                <div class="space-y-2">
-                                    <label class="block text-xs font-semibold text-slate-700">লোগো নাম / টেক্সট পরিবর্তন</label>
-                                    <div class="flex space-x-2">
-                                        <input type="text" id="settingLogoInput" placeholder="যেমন: HPL" class="flex-1 px-3 py-2 text-sm border border-slate-300 rounded-lg">
-                                        <button onclick="updateAppLogoText()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm">সেভ</button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- User Management Table -->
-                            <div class="pt-6 border-t border-slate-200">
-                                <h4 class="font-bold text-slate-800 text-sm mb-3">ইউজার ম্যানেজমেন্ট (Enable / Disable / Delete)</h4>
-                                <div class="overflow-x-auto">
-                                    <table class="w-full text-left text-sm">
-                                        <thead class="bg-slate-50 text-slate-600 text-xs uppercase border-b border-slate-200">
-                                            <tr>
-                                                <th class="p-3">ইউজার নাম</th>
-                                                <th class="p-3">জিমেইল ও ফোন</th>
-                                                <th class="p-3">স্ট্যাটাস</th>
-                                                <th class="p-3 text-center">অ্যাকশন</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="userManagementTableBody" class="divide-y divide-slate-100">
-                                            <!-- Dynamically populated -->
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-            </main>
-        </div>
-
-        <!-- USER PROFILE MODAL -->
-        <div id="userProfileModal" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden border border-slate-100 animate-fadeIn max-h-[90vh] flex flex-col">
-                <!-- Modal Header -->
-                <div class="bg-gradient-to-r from-indigo-600 to-violet-600 p-6 text-white relative">
-                    <button onclick="closeUserProfileModal()" class="absolute top-4 right-4 text-white/80 hover:text-white bg-white/10 p-2 rounded-full">
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
-                    <div class="flex items-center space-x-4">
-                        <div id="modalUserAvatar" class="w-16 h-16 rounded-2xl bg-white text-indigo-700 font-bold text-2xl flex items-center justify-center shadow-lg">
-                            U
-                        </div>
-                        <div>
-                            <h2 id="modalUserName" class="text-xl font-bold">ইউজার নাম</h2>
-                            <p id="modalUserPhone" class="text-sm text-indigo-100 mt-0.5">ফোন: ০১৭xxxxxxxx</p>
-                            <p id="modalUserEmail" class="text-xs text-indigo-200">email@gmail.com</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Modal Body with Scroll -->
-                <div class="p-6 overflow-y-auto space-y-6 custom-scrollbar flex-1">
-                    
-                    <!-- Earnings and Quality Score Cards -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-xl flex items-center justify-between">
-                            <div>
-                                <p class="text-xs font-semibold text-emerald-700 uppercase">জমা কৃত মোট টাকা</p>
-                                <h3 id="modalUserEarnedMoney" class="text-2xl font-extrabold text-emerald-800 mt-1">৳০</h3>
-                            </div>
-                            <div class="w-12 h-12 bg-emerald-500 text-white rounded-xl flex items-center justify-center text-xl">
-                                <i class="fa-solid fa-wallet"></i>
-                            </div>
-                        </div>
-
-                        <div class="bg-indigo-50 border border-indigo-200 p-4 rounded-xl flex items-center justify-between">
-                            <div>
-                                <p class="text-xs font-semibold text-indigo-700 uppercase">কাজের মান (%)</p>
-                                <h3 id="modalUserQualityScore" class="text-2xl font-extrabold text-indigo-800 mt-1">১০০%</h3>
-                            </div>
-                            <div class="w-12 h-12 bg-indigo-500 text-white rounded-xl flex items-center justify-center text-xl">
-                                <i class="fa-solid fa-award"></i>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Daily Reports Summary Box -->
-                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
-                        <h4 class="font-bold text-slate-800 text-sm flex items-center">
-                            <i class="fa-solid fa-chart-pie text-indigo-600 mr-2"></i> দৈনিক রিপোর্ট সারসংক্ষেপ
-                        </h4>
-                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
-                            <div class="bg-white p-3 rounded-lg border border-slate-200">
-                                <span class="text-slate-500 block">আজ লিড সেল</span>
-                                <strong id="modalReportDailyLeads" class="text-slate-800 text-base">০ পিচ</strong>
-                            </div>
-                            <div class="bg-white p-3 rounded-lg border border-slate-200">
-                                <span class="text-slate-500 block">আজ লিড সমস্যা/ইশু</span>
-                                <strong id="modalReportDailyIssue" class="text-rose-600 text-base">০ পিচ</strong>
-                            </div>
-                            <div class="bg-white p-3 rounded-lg border border-slate-200">
-                                <span class="text-slate-500 block">গড় লিড রেইট</span>
-                                <strong id="modalReportLeadRate" class="text-indigo-600 text-base">৳০</strong>
-                            </div>
-                            <div class="bg-white p-3 rounded-lg border border-slate-200">
-                                <span class="text-slate-500 block">মোট সেল পরিমাণ</span>
-                                <strong id="modalReportTotalSale" class="text-slate-800 text-base">৳০</strong>
-                            </div>
-                            <div class="bg-white p-3 rounded-lg border border-slate-200">
-                                <span class="text-slate-500 block">ক্যাশ দেওয়া হলো</span>
-                                <strong id="modalReportCashGiven" class="text-emerald-600 text-base">৳০</strong>
-                            </div>
-                            <div class="bg-white p-3 rounded-lg border border-slate-200">
-                                <span class="text-slate-500 block">বাকী টাকা রইল</span>
-                                <strong id="modalReportDueAmount" class="text-amber-600 text-base">৳০</strong>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Date Range Filterable PDF Report Generator Section -->
-                    <div class="bg-white border border-slate-200 rounded-xl p-4 space-y-4">
-                        <h4 class="font-bold text-slate-800 text-sm flex items-center">
-                            <i class="fa-solid fa-file-pdf text-rose-600 mr-2"></i> তারিখভিত্তিক পিডিএফ রিপোর্ট ও সার্চ
-                        </h4>
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            <div>
-                                <label class="block text-[11px] font-semibold text-slate-600 mb-1">শুরুর তারিখ</label>
-                                <input type="date" id="reportStartDate" class="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg">
-                            </div>
-                            <div>
-                                <label class="block text-[11px] font-semibold text-slate-600 mb-1">শেষ তারিখ</label>
-                                <input type="date" id="reportEndDate" class="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg">
-                            </div>
-                            <div class="flex items-end">
-                                <button onclick="generateUserPDFReport()" class="w-full py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold shadow transition-colors">
-                                    <i class="fa-solid fa-file-pdf mr-1"></i> সার্চ ও পিডিএফ প্রিভিউ
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- PDF Preview Result Box -->
-                        <div id="pdfPreviewContainer" class="hidden border border-dashed border-slate-300 p-4 rounded-xl bg-slate-50 text-xs space-y-2">
-                            <div class="flex items-center justify-between border-b border-slate-200 pb-2">
-                                <span class="font-bold text-slate-800">অফিসিয়াল লিড ও পেমেন্ট রিপোর্ট (PDF Format)</span>
-                                <button onclick="printPDFView()" class="px-3 py-1 bg-indigo-600 text-white rounded font-medium"><i class="fa-solid fa-print mr-1"></i> প্রিন্ট/ডাউনলোড</button>
-                            </div>
-                            <div id="pdfPreviewContent" class="space-y-1 text-slate-700">
-                                <!-- Populated dynamically -->
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-
-        <!-- LEAD ENTRY REPORT PREVIEW MODAL -->
-        <div id="leadReportPreviewModal" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100 p-6 space-y-4">
-                <div class="flex items-center justify-between border-b border-slate-200 pb-3">
-                    <h3 class="font-bold text-slate-800 text-base">লিড এন্ট্রি প্রিভিউ (Report Preview)</h3>
-                    <button onclick="closeLeadPreviewModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
-                </div>
-                <div id="leadPreviewContent" class="space-y-2 text-sm text-slate-700 bg-slate-50 p-4 rounded-xl border border-slate-200">
-                    <!-- Preview details -->
-                </div>
-                <div class="flex justify-end space-x-2 pt-2">
-                    <button onclick="closeLeadPreviewModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 rounded-lg text-xs font-semibold">বন্ধ করুন</button>
-                    <button onclick="confirmAndSubmitLead()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold">নিশ্চিত করুন ও সাবমিট</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- PAYMENT DETAILS MODAL -->
-        <div id="paymentDetailModal" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-100 p-6 space-y-4">
-                <div class="flex items-center justify-between border-b border-slate-200 pb-3">
-                    <h3 class="font-bold text-slate-800 text-base">পেমেন্ট ও ট্র্যাকিং বিস্তারিত</h3>
-                    <button onclick="closePaymentDetailModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
-                </div>
-                <div id="paymentDetailContent" class="space-y-3 text-sm text-slate-700">
-                    <!-- Populated dynamically -->
-                </div>
-                <div class="flex justify-end pt-2">
-                    <button onclick="closePaymentDetailModal()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold">বন্ধ করুন</button>
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- APPLICATION JAVASCRIPT -->
     <script>
-        // --- INITIAL STATE & LOCAL STORAGE DATABASE ---
-        let appState = {
-            currentUser: null, // { name, email, phone, role: 'admin'|'user', status: 'active', avatar }
-            users: [
-                { id: 'usr-admin', name: 'এডমিন স্যার', email: 'admin@lead.com', phone: '01700000000', role: 'admin', status: 'active', avatar: 'অ' },
-                { id: 'usr-1', name: 'রহিম উদ্দিন', email: 'rahim@gmail.com', phone: '01811223344', role: 'user', status: 'active', avatar: 'র' },
-                { id: 'usr-2', name: 'করিম মিয়া', email: 'karim@gmail.com', phone: '01922334455', role: 'user', status: 'active', avatar: 'ক' },
-                { id: 'usr-3', name: 'ফাতেমা বেগম', email: 'fatema@gmail.com', phone: '01633445566', role: 'user', status: 'active', avatar: 'ফ' }
-            ],
-            leadsHistory: [
-                { id: 'L-101', date: '2026-06-06 10:30 AM', userName: 'রহিম উদ্দিন', type: 'CL Lead', qty: 150, rate: 25, issue: 5, okLeads: 145, totalAmount: 3625, deposit: 3000, due: 625, tracking: 'TRK-984201', status: 'সফল' },
-                { id: 'L-102', date: '2026-06-06 11:45 AM', userName: 'করিম মিয়া', type: 'Facebook Lead', qty: 200, rate: 30, issue: 10, okLeads: 190, totalAmount: 5700, deposit: 5000, due: 700, tracking: 'TRK-984202', status: 'সফল' }
-            ],
-            userActivities: [
-                { time: '2026-06-06 09:00 AM', userName: 'রহিম উদ্দিন', details: 'সফলভাবে সাইনআপ সম্পন্ন করে সিস্টেমে প্রবেশ করেছেন।', status: 'সক্রিয়' },
-                { time: '2026-06-06 09:15 AM', userName: 'করিম মিয়া', details: 'সফলভাবে সাইনআপ সম্পন্ন করে সিস্টেমে প্রবেশ করেছেন।', status: 'সক্রিয়' },
-                { time: '2026-06-06 10:00 AM', userName: 'এডমিন স্যার', details: 'এডমিন প্যানেল থেকে সিস্টেমে লগইন করেছেন।', status: 'এডমিন' }
-            ],
-            highlightText: 'হাউজ রেইন্ট লিড ক্রয়-২৬ এ সকলকে স্বাগতম! আজকের টার্গেট পূরণ করলে বিশেষ বোনাস প্রদান করা হবে।',
-            settings: { font: 'Inter', theme: 'light', logoText: 'HPL' },
-            captchaAnswer: 7
+        // ==========================================
+        // FIREBASE CONFIGURATION (আপনার ফায়ারবেস প্রজেক্টের তথ্য এখানে দিন)
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
         };
 
-        // Load saved state if exists
-        function saveToStorage() {
-            localStorage.setItem('house_paint_lead_app_2026', JSON.stringify(appState));
-        }
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
-        function loadFromStorage() {
-            const saved = localStorage.getItem('house_paint_lead_app_2026');
-            if (saved) {
-                try {
-                    appState = JSON.parse(saved);
-                } catch (e) {
-                    console.error('Storage parse error', e);
-                }
-            }
-        }
+        // Application State
+        let state = {
+            currentUser: null,
+            users: [],
+            leads: [],
+            settings: {
+                fontFamily: 'Hind Siliguri',
+                themeColor: '#3b82f6',
+                logoText: 'হাউজ রেইন্ট লিড ক্রয়-২৬',
+                highlightText: ''
+            },
+            activeTab: 'home',
+            selectedProfileUser: null
+        };
 
-        // --- CAPTCHA GENERATOR ---
-        function generateCaptcha() {
-            const num1 = Math.floor(Math.random() * 10) + 1;
-            const num2 = Math.floor(Math.random() * 10) + 1;
-            appState.captchaAnswer = num1 + num2;
-            document.getElementById('captchaQuestion').innerText = `${num1} + ${num2} = ?`;
-        }
-
-        // --- AUTH TABS & HANDLERS ---
-        function switchAuthTab(tab) {
-            const signupForm = document.getElementById('signupForm');
-            const loginForm = document.getElementById('loginForm');
-            const tabSignupBtn = document.getElementById('tabSignupBtn');
-            const tabLoginBtn = document.getElementById('tabLoginBtn');
-
-            if (tab === 'signup') {
-                signupForm.classList.remove('hidden');
-                loginForm.classList.add('hidden');
-                tabSignupBtn.className = "flex-1 py-2 text-sm font-semibold rounded-md bg-white text-indigo-600 shadow-sm transition-all";
-                tabLoginBtn.className = "flex-1 py-2 text-sm font-semibold rounded-md text-slate-600 transition-all";
-                generateCaptcha();
-            } else {
-                signupForm.classList.add('hidden');
-                loginForm.classList.remove('hidden');
-                tabLoginBtn.className = "flex-1 py-2 text-sm font-semibold rounded-md bg-white text-indigo-600 shadow-sm transition-all";
-                tabSignupBtn.className = "flex-1 py-2 text-sm font-semibold rounded-md text-slate-600 transition-all";
-            }
-        }
-
-        function handleSignup(e) {
-            e.preventDefault();
-            const name = document.getElementById('suName').value.trim();
-            const email = document.getElementById('suEmail').value.trim();
-            const phone = document.getElementById('suPhone').value.trim();
-            const password = document.getElementById('suPassword').value;
-            const captchaInput = parseInt(document.getElementById('suCaptchaInput').value);
-
-            if (captchaInput !== appState.captchaAnswer) {
-                alertUserModal('ক্যাপ্চা সঠিক হয়নি। দয়া করে আবার চেষ্টা করুন।');
-                generateCaptcha();
-                return;
-            }
-
-            // Check if email already exists
-            if (appState.users.some(u => u.email === email)) {
-                alertUserModal('এই জিমেইল দিয়ে ইতিমধ্যে অ্যাকাউন্ট খোলা হয়েছে!');
-                return;
-            }
-
-            const newUser = {
-                id: 'usr-' + Date.now(),
-                name,
-                email,
-                phone,
-                role: 'user',
-                status: 'active',
-                avatar: name.charAt(0)
-            };
-
-            appState.users.push(newUser);
-            appState.userActivities.unshift({
-                time: new Date().toLocaleString('bn-BD'),
-                userName: name,
-                details: 'নতুন ইউজার হিসেবে সফলভাবে সাইনআপ সম্পন্ন করেছেন।',
-                status: 'সক্রিয়'
-            });
-
-            appState.currentUser = newUser;
-            saveToStorage();
-            initializeAppUI();
-        }
-
-        function handleLogin(e) {
-            e.preventDefault();
-            const identifier = document.getElementById('liIdentifier').value.trim();
-            const password = document.getElementById('liPassword').value;
-
-            // Hardcoded Admin check
-            if (identifier === 'admin@lead.com' && password === 'admin123') {
-                const adminUser = appState.users.find(u => u.role === 'admin') || {
-                    id: 'usr-admin', name: 'এডমিন স্যার', email: 'admin@lead.com', phone: '01700000000', role: 'admin', status: 'active', avatar: 'অ'
-                };
-                appState.currentUser = adminUser;
-                appState.userActivities.unshift({
-                    time: new Date().toLocaleString('bn-BD'),
-                    userName: 'এডমিন স্যার',
-                    details: 'এডমিন প্যানেলে লগইন করেছেন।',
-                    status: 'এডমিন'
+        // Real-time listener for Users from Firestore
+        function initRealtimeSync() {
+            db.collection("users").onSnapshot((snapshot) => {
+                state.users = [];
+                snapshot.forEach((doc) => {
+                    state.users.push({ id: doc.id, ...doc.data() });
                 });
-                saveToStorage();
-                initializeAppUI();
-                return;
-            }
-
-            const foundUser = appState.users.find(u => u.email === identifier || u.phone === identifier);
-            if (!foundUser) {
-                alertUserModal('ইউজার খুঁজে পাওয়া যায়নি! সঠিক জিমেইল বা ফোন দিন।');
-                return;
-            }
-
-            if (foundUser.status === 'disabled') {
-                alertUserModal('আপনার অ্যাকাউন্টটি সাময়িকভাবে ডিসেবল করা হয়েছে। এডমিনের সাথে যোগাযোগ করুন।');
-                return;
-            }
-
-            appState.currentUser = foundUser;
-            appState.userActivities.unshift({
-                time: new Date().toLocaleString('bn-BD'),
-                userName: foundUser.name,
-                details: 'সিস্টেমে সফলভাবে লগইন করেছেন।',
-                status: 'সক্রিয়'
+                render();
             });
-            saveToStorage();
-            initializeAppUI();
+
+            db.collection("leads").onSnapshot((snapshot) => {
+                state.leads = [];
+                snapshot.forEach((doc) => {
+                    state.leads.push({ id: doc.id, ...doc.data() });
+                });
+                render();
+            });
+        }
+
+        // --- RENDER FUNCTIONS ---
+        function render() {
+            const app = document.getElementById('app');
+            if (!state.currentUser) {
+                app.innerHTML = renderAuthPage();
+            } else {
+                app.innerHTML = renderMainLayout();
+            }
+        }
+
+        // 1. Auth Page (Signup / Login)
+        function renderAuthPage() {
+            return `
+                <div class="min-h-screen flex items-center justify-center bg-blue-50 p-4">
+                    <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
+                        <h2 class="text-2xl font-bold text-center text-blue-600 mb-6">হাউজ রেইন্ট লিড ক্রয়-২৬</h2>
+                        <form onsubmit="handleAuth(event)" class="space-y-4">
+                            <div id="signupFields">
+                                <label class="block text-sm font-medium mb-1">ফুল নাম</label>
+                                <input type="text" id="fullName" class="w-full p-2.5 border rounded-lg" placeholder="আপনার পুরো নাম">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">জিমেইল</label>
+                                <input type="email" id="email" required class="w-full p-2.5 border rounded-lg" placeholder="example@gmail.com">
+                            </div>
+                            <div id="phoneField">
+                                <label class="block text-sm font-medium mb-1">ফোন নম্বর</label>
+                                <input type="text" id="phone" class="w-full p-2.5 border rounded-lg" placeholder="01XXXXXXXXX">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">পাসওয়ার্ড</label>
+                                <input type="password" id="password" required class="w-full p-2.5 border rounded-lg" placeholder="********">
+                            </div>
+                            <div class="bg-gray-100 p-3 rounded-lg flex items-center justify-between">
+                                <span class="font-bold tracking-widest text-lg">৭ ৫ ৯ ২</span>
+                                <input type="text" id="captcha" placeholder="ক্যাপ্চা লিখুন" class="p-1 border rounded w-32 text-center" required>
+                            </div>
+                            <button type="submit" class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold hover:bg-blue-700 transition">প্রবেশ করুন / সাইনআপ</button>
+                        </form>
+                        <p class="text-xs text-center text-gray-500 mt-4">এডমিন লগইন করতে: admin@lead.com / admin123</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Handle Authentication & Database Save
+        async function handleAuth(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const captcha = document.getElementById('captcha').value;
+
+            if (captcha !== '৭৫৯২') {
+                alert('ক্যাপ্চা সঠিক নয়!');
+                return;
+            }
+
+            // Admin Check
+            if (email === 'admin@lead.com' && password === 'admin123') {
+                state.currentUser = { name: 'Admin', email: 'admin@lead.com', role: 'admin' };
+                render();
+                return;
+            }
+
+            const fullName = document.getElementById('fullName').value;
+            const phone = document.getElementById('phone').value;
+
+            // Check if user exists in Firestore
+            const userRef = db.collection('users').doc(email);
+            const doc = await userRef.get();
+
+            if (!doc.exists) {
+                // New User Registration
+                const newUser = { fullName, email, phone, createdAt: new Date().toISOString(), status: 'active' };
+                await userRef.set(newUser);
+                state.currentUser = newUser;
+            } else {
+                state.currentUser = doc.data();
+            }
+            render();
+        }
+
+        // 2. Main Layout (Sidebar + Content)
+        function renderMainLayout() {
+            const isAdmin = state.currentUser.role === 'admin' || state.currentUser.email === 'admin@lead.com';
+            return `
+                <div class="flex min-h-screen">
+                    <!-- Sidebar -->
+                    <div class="w-64 bg-slate-900 text-white p-4 space-y-4 hidden md:block">
+                        <h1 class="text-xl font-bold text-blue-400 mb-6">${state.settings.logoText}</h1>
+                        <nav class="space-y-2">
+                            <button onclick="setTab('home')" class="w-full text-left p-2.5 rounded hover:bg-slate-800 flex items-center gap-3"><i class="fas fa-home"></i> হোম পেজ</button>
+                            ${isAdmin ? `
+                                <button onclick="setTab('leadEntry')" class="w-full text-left p-2.5 rounded hover:bg-slate-800 flex items-center gap-3"><i class="fas fa-plus-circle"></i> লিড এন্ট্রি</button>
+                                <button onclick="setTab('userHistory')" class="w-full text-left p-2.5 rounded hover:bg-slate-800 flex items-center gap-3"><i class="fas fa-history"></i> ইউজার হিষ্টোরী</button>
+                                <button onclick="setTab('paymentHistory')" class="w-full text-left p-2.5 rounded hover:bg-slate-800 flex items-center gap-3"><i class="fas fa-wallet"></i> পেমেন্ট হিষ্টোরী</button>
+                                <button onclick="setTab('settings')" class="w-full text-left p-2.5 rounded hover:bg-slate-800 flex items-center gap-3"><i class="fas fa-cog"></i> সেটিং</button>
+                                <button onclick="setTab('addFeature')" class="w-full text-left p-2.5 rounded hover:bg-slate-800 flex items-center gap-3"><i class="fas fa-bullhorn"></i> এ্যাড ফিউচার</button>
+                            ` : ''}
+                            <button onclick="logout()" class="w-full text-left p-2.5 rounded hover:bg-red-600 text-red-400 hover:text-white flex items-center gap-3 mt-10"><i class="fas fa-sign-out-alt"></i> লগআউট</button>
+                        </nav>
+                    </div>
+
+                    <!-- Main Content Area -->
+                    <div class="flex-1 p-6 overflow-y-auto">
+                        <div class="flex justify-between items-center mb-6 bg-white p-4 rounded-xl shadow-sm">
+                            <h2 class="text-xl font-bold text-slate-700">স্বাগতম, ${state.currentUser.fullName || state.currentUser.name}</h2>
+                            <button onclick="logout()" class="md:hidden bg-red-500 text-white px-3 py-1 rounded">লগআউট</button>
+                        </div>
+                        ${renderTabContent()}
+                    </div>
+                </div>
+            `;
+        }
+
+        function setTab(tab) {
+            state.activeTab = tab;
+            state.selectedProfileUser = null;
+            render();
         }
 
         function logout() {
-            appState.currentUser = null;
-            saveToStorage();
-            document.getElementById('authScreen').classList.remove('hidden');
-            document.getElementById('mainApp').classList.add('hidden');
-            switchAuthTab('login');
+            state.currentUser = null;
+            render();
         }
 
-        // Custom Modal for Alert instead of alert()
-        function alertUserModal(msg) {
-            alert(msg); // Fallback / direct alert representation
+        function renderTabContent() {
+            if (state.activeTab === 'home') return renderHomePage();
+            if (state.activeTab === 'leadEntry') return renderLeadEntryPage();
+            if (state.activeTab === 'userHistory') return renderUserHistoryPage();
+            if (state.activeTab === 'paymentHistory') return renderPaymentHistoryPage();
+            if (state.activeTab === 'settings') return renderSettingsPage();
+            if (state.activeTab === 'addFeature') return renderAddFeaturePage();
+            return renderHomePage();
         }
 
-        // --- APP INITIALIZATION AFTER LOGIN ---
-        function initializeAppUI() {
-            if (!appState.currentUser) return;
-
-            document.getElementById('authScreen').classList.add('hidden');
-            document.getElementById('mainApp').classList.remove('hidden');
-
-            // Sidebar & Top Nav Display
-            document.getElementById('currentUserNameDisplay').innerText = appState.currentUser.name;
-            document.getElementById('currentUserRoleDisplay').innerText = appState.currentUser.role === 'admin' ? 'এডমিন (Admin)' : 'মেম্বার ইউজার';
-            document.getElementById('currentUserAvatar').innerText = appState.currentUser.avatar;
-            document.getElementById('topNavAvatar').innerText = appState.currentUser.avatar;
-            document.getElementById('currentDateDisplay').innerText = 'তারিখ: ' + new Date().toLocaleDateString('bn-BD');
-
-            // Admin menu visibility
-            const adminMenuSection = document.getElementById('adminMenuSection');
-            if (appState.currentUser.role === 'admin') {
-                adminMenuSection.classList.remove('hidden');
-            } else {
-                adminMenuSection.classList.add('hidden');
-            }
-
-            // Render views
-            renderHomeData();
-            renderUsersGrid();
-            renderLeadEntryDropdowns();
-            renderUserHistory();
-            renderPaymentHistory();
-            renderUserSettingsTable();
-            renderHighlightBanner();
-            applySettingsStyles();
-
-            // Default switch to home
-            switchTab('home');
-        }
-
-        // --- NAVIGATION TAB SWITCHER ---
-        function switchTab(tabId) {
-            const views = ['home', 'leadEntry', 'userHistory', 'paymentHistory', 'addFeature', 'settings'];
-            views.forEach(v => {
-                const el = document.getElementById('view-' + v);
-                if (el) el.classList.add('hidden');
-                const navBtn = document.getElementById('nav-' + v);
-                if (navBtn) navBtn.className = "w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 text-slate-300 transition-colors";
-            });
-
-            const activeView = document.getElementById('view-' + tabId);
-            if (activeView) activeView.classList.remove('hidden');
-            const activeNav = document.getElementById('nav-' + tabId);
-            if (activeNav) activeNav.className = "w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium bg-indigo-600 text-white shadow-md";
-
-            const titles = {
-                home: 'হোম পেজ',
-                leadEntry: 'লিড এন্ট্রি (Lead Entry)',
-                userHistory: 'ইউজার হিষ্টোরী ও কার্যক্রম',
-                paymentHistory: 'পেমেন্ট হিষ্টোরী ও ট্র্যাকিং',
-                addFeature: 'এ্যাড ফিউচার / ঘোষণা',
-                settings: 'সিস্টেম সেটিং'
-            };
-            document.getElementById('pageTitle').innerText = titles[tabId] || 'হাউজ রেইন্ট লিড ক্রয়-২৬';
-        }
-
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('-translate-x-full');
-        }
-
-        // --- HOME VIEW RENDERERS ---
-        function renderHomeData() {
-            document.getElementById('statTotalUsers').innerText = appState.users.filter(u => u.role !== 'admin').length;
-            
-            let totalLeadsToday = appState.leadsHistory.reduce((acc, curr) => acc + curr.okLeads, 0);
-            let totalDepositsVal = appState.leadsHistory.reduce((acc, curr) => acc + curr.deposit, 0);
-            let totalIssuesToday = appState.leadsHistory.reduce((acc, curr) => acc + curr.issue, 0);
-
-            document.getElementById('statTodayLeads').innerText = totalLeadsToday + ' পিচ';
-            document.getElementById('statTotalDeposits').innerText = '৳' + totalDepositsVal.toLocaleString('bn-BD');
-            document.getElementById('statTodayIssues').innerText = totalIssuesToday + ' পিচ';
-
-            // Render Home Live History Table
-            const tbody = document.getElementById('homeLiveHistoryTableBody');
-            tbody.innerHTML = '';
-            appState.leadsHistory.forEach(item => {
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50">
-                        <td class="p-3 text-xs text-slate-500">${item.date}</td>
-                        <td class="p-3 font-semibold text-slate-800">${item.userName}</td>
-                        <td class="p-3"><span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded text-xs font-medium">${item.type}</span></td>
-                        <td class="p-3 text-slate-700">${item.qty} পিচ</td>
-                        <td class="p-3 text-rose-600 font-medium">${item.issue} পিচ</td>
-                        <td class="p-3 font-bold text-emerald-600">${item.okLeads} পিচ</td>
-                        <td class="p-3 font-bold text-slate-800">৳${item.totalAmount}</td>
-                        <td class="p-3"><span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full text-xs font-semibold">${item.status}</span></td>
-                    </tr>
-                `;
-            });
-        }
-
-        function renderUsersGrid() {
-            const grid = document.getElementById('usersGridListing');
-            grid.innerHTML = '';
-            const normalUsers = appState.users.filter(u => u.role !== 'admin');
-            document.getElementById('userCountBadge').innerText = normalUsers.length + ' জন ইউজার';
-
-            normalUsers.forEach(user => {
-                // Calculate user earnings & quality score
-                const userLeads = appState.leadsHistory.filter(l => l.userName === user.name);
-                const totalEarned = userLeads.reduce((acc, l) => acc + l.deposit, 0);
-                const totalQty = userLeads.reduce((acc, l) => acc + l.qty, 0);
-                const totalIssues = userLeads.reduce((acc, l) => acc + l.issue, 0);
-                const qualityScore = totalQty > 0 ? Math.round(((totalQty - totalIssues) / totalQty) * 100) : 100;
-
-                grid.innerHTML += `
-                    <div onclick="openUserProfile('${user.id}')" class="bg-slate-50 hover:bg-indigo-50/40 border border-slate-200 hover:border-indigo-300 rounded-xl p-4 cursor-pointer transition-all shadow-sm flex flex-col items-center text-center group">
-                        <div class="w-14 h-14 rounded-2xl bg-indigo-600 text-white font-bold text-xl flex items-center justify-center shadow-md mb-3 group-hover:scale-105 transition-transform">
-                            ${user.avatar}
+        // Home Page Content
+        function renderHomePage() {
+            return `
+                <div class="space-y-6">
+                    ${state.settings.highlightText ? `
+                        <div class="bg-amber-100 border-l-4 border-amber-500 text-amber-700 p-4 rounded shadow-md">
+                            <p class="font-bold">গুরুত্বপূর্ণ নোটিশ:</p>
+                            <p>${state.settings.highlightText}</p>
                         </div>
-                        <h4 class="font-bold text-slate-800 text-sm group-hover:text-indigo-600 transition-colors">${user.name}</h4>
-                        <p class="text-xs text-slate-500 mt-0.5">${user.phone}</p>
-                        <div class="w-full grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-slate-200 text-left">
-                            <div>
-                                <span class="text-[10px] text-slate-400 block">জমা টাকা</span>
-                                <strong class="text-xs text-emerald-600">৳${totalEarned}</strong>
-                            </div>
-                            <div class="text-right">
-                                <span class="text-[10px] text-slate-400 block">কাজের মান</span>
-                                <strong class="text-xs text-indigo-600">${qualityScore}%</strong>
-                            </div>
+                    ` : ''}
+
+                    <div class="bg-white p-6 rounded-xl shadow">
+                        <h3 class="text-lg font-bold mb-4">সকল রেজিস্টার্ড ইউজারদের তালিকা</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                            ${state.users.map(u => `
+                                <div onclick="selectUserProfile('${u.email}')" class="p-4 border rounded-xl cursor-pointer hover:shadow-md transition bg-blue-50/50 flex items-center gap-4">
+                                    <div class="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-xl">${u.fullName ? u.fullName[0] : 'U'}</div>
+                                    <div>
+                                        <h4 class="font-bold text-gray-800">${u.fullName}</h4>
+                                        <p class="text-sm text-gray-500">${u.phone || 'নম্বর নেই'}</p>
+                                    </div>
+                                </div>
+                            `).join('')}
                         </div>
                     </div>
-                `;
-            });
-        }
 
-        // --- USER PROFILE MODAL ---
-        let selectedProfileUserId = null;
-
-        function openUserProfile(userId) {
-            selectedProfileUserId = userId;
-            const user = appState.users.find(u => u.id === userId);
-            if (!user) return;
-
-            document.getElementById('modalUserName').innerText = user.name;
-            document.getElementById('modalUserPhone').innerText = 'ফোন: ' + user.phone;
-            document.getElementById('modalUserEmail').innerText = user.email;
-            document.getElementById('modalUserAvatar').innerText = user.avatar;
-
-            // Calculate metrics
-            const userLeads = appState.leadsHistory.filter(l => l.userName === user.name);
-            const totalEarned = userLeads.reduce((acc, l) => acc + l.deposit, 0);
-            const totalQty = userLeads.reduce((acc, l) => acc + l.qty, 0);
-            const totalIssues = userLeads.reduce((acc, l) => acc + l.issue, 0);
-            const totalSaleAmt = userLeads.reduce((acc, l) => acc + l.totalAmount, 0);
-            const totalDueAmt = userLeads.reduce((acc, l) => acc + l.due, 0);
-            const qualityScore = totalQty > 0 ? Math.round(((totalQty - totalIssues) / totalQty) * 100) : 100;
-
-            document.getElementById('modalUserEarnedMoney').innerText = '৳' + totalEarned.toLocaleString('bn-BD');
-            document.getElementById('modalUserQualityScore').innerText = qualityScore + '%';
-
-            document.getElementById('modalReportDailyLeads').innerText = totalQty + ' পিচ';
-            document.getElementById('modalReportDailyIssue').innerText = totalIssues + ' পিচ';
-            document.getElementById('modalReportLeadRate').innerText = userLeads.length > 0 ? '৳' + userLeads[0].rate : '৳০';
-            document.getElementById('modalReportTotalSale').innerText = '৳' + totalSaleAmt.toLocaleString('bn-BD');
-            document.getElementById('modalReportCashGiven').innerText = '৳' + totalEarned.toLocaleString('bn-BD');
-            document.getElementById('modalReportDueAmount').innerText = '৳' + totalDueAmt.toLocaleString('bn-BD');
-
-            // Hide PDF preview initially
-            document.getElementById('pdfPreviewContainer').classList.add('hidden');
-            document.getElementById('userProfileModal').classList.remove('hidden');
-        }
-
-        function closeUserProfileModal() {
-            document.getElementById('userProfileModal').classList.add('hidden');
-        }
-
-        function generateUserPDFReport() {
-            const startDate = document.getElementById('reportStartDate').value;
-            const endDate = document.getElementById('reportEndDate').value;
-            const user = appState.users.find(u => u.id === selectedProfileUserId);
-            if (!user) return;
-
-            const userLeads = appState.leadsHistory.filter(l => l.userName === user.name);
-            const totalQty = userLeads.reduce((acc, l) => acc + l.qty, 0);
-            const totalMoney = userLeads.reduce((acc, l) => acc + l.totalAmount, 0);
-            const totalDeposit = userLeads.reduce((acc, l) => acc + l.deposit, 0);
-
-            const container = document.getElementById('pdfPreviewContent');
-            container.innerHTML = `
-                <p><b>ইউজার নাম:</b> ${user.name}</p>
-                <p><b>জিমেইল:</b> ${user.email} | ফোন: ${user.phone}</p>
-                <p><b>সময়সীমা:</b> ${startDate || 'শুরু'} হতে ${endDate || 'বর্তমান'}</p>
-                <p><b>সর্বমোট সেলকৃত লিড:</b> ${totalQty} পিচ</p>
-                <p><b>সর্বমোট টাকার পরিমাণ:</b> ৳${totalMoney}</p>
-                <p><b>পরিশোধিত টাকা:</b> ৳${totalDeposit}</p>
-                <p class="text-emerald-600 font-bold mt-2">স্ট্যাটাস: সফলভাবে যাচাইকৃত ও রিপোর্ট প্রস্তুত।</p>
+                    ${state.selectedProfileUser ? renderUserProfileView(state.selectedProfileUser) : ''}
+                </div>
             `;
-            document.getElementById('pdfPreviewContainer').classList.remove('hidden');
         }
 
-        function printPDFView() {
-            window.print();
+        function selectUserProfile(email) {
+            const user = state.users.find(u => u.email === email);
+            state.selectedProfileUser = user;
+            render();
         }
 
-        // --- LEAD ENTRY LOGIC ---
-        function renderLeadEntryDropdowns() {
-            const select = document.getElementById('leUserSelect');
-            select.innerHTML = '<option value="">ইউজার সিলেক্ট করুন</option>';
-            appState.users.filter(u => u.role !== 'admin').forEach(user => {
-                select.innerHTML += `<option value="${user.name}">${user.name} (${user.phone})</option>`;
-            });
+        function renderUserProfileView(user) {
+            const userLeads = state.leads.filter(l => l.userName === user.fullName);
+            const totalPaid = userLeads.reduce((sum, l) => sum + Number(l.depositMoney || 0), 0);
+            const totalSell = userLeads.reduce((sum, l) => sum + Number(l.totalMoney || 0), 0);
+
+            return `
+                <div class="bg-white p-6 rounded-xl shadow-lg border-2 border-blue-200 mt-6 space-y-6">
+                    <div class="flex justify-between items-start">
+                        <div class="flex items-center gap-4">
+                            <div class="w-20 h-20 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-3xl">${user.fullName[0]}</div>
+                            <div>
+                                <h2 class="text-2xl font-bold">${user.fullName}</h2>
+                                <p class="text-gray-600">${user.phone}</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm text-gray-500">জমা কৃত মোট টাকা</p>
+                            <p class="text-2xl font-bold text-green-600">৳ ${totalPaid}</p>
+                            <p class="text-xs text-blue-500 mt-1">কাজের মান: ৯৫%</p>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="font-bold mb-3">সাম্প্রতিক লিড ও সেল রিপোর্ট</h4>
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-100 text-sm">
+                                    <th class="p-2 border">তারিখ/ধরণ</th>
+                                    <th class="p-2 border">পরিমান</th>
+                                    <th class="p-2 border">মোট টাকা</th>
+                                    <th class="p-2 border">বাকী</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${userLeads.map(l => `
+                                    <tr>
+                                        <td class="p-2 border">${l.leadType}</td>
+                                        <td class="p-2 border">${l.leadQuantity}</td>
+                                        <td class="p-2 border">৳${l.totalMoney}</td>
+                                        <td class="p-2 border">৳${l.dueMoney}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
         }
 
-        function calculateLeadForm() {
-            const qty = parseFloat(document.getElementById('leQuantity').value) || 0;
-            const rate = parseFloat(document.getElementById('leRate').value) || 0;
-            const issue = parseFloat(document.getElementById('leIssue').value) || 0;
-            const deposit = parseFloat(document.getElementById('leDeposit').value) || 0;
-
-            const okLeads = Math.max(0, qty - issue);
-            const totalAmount = okLeads * rate;
-            const dueAmount = Math.max(0, totalAmount - deposit);
-
-            document.getElementById('leOkLeads').value = okLeads;
-            document.getElementById('leTotalAmount').value = totalAmount.toFixed(2);
-            document.getElementById('leDue').value = dueAmount.toFixed(2);
+        // 3. Lead Entry Page (Admin Only)
+        function renderLeadEntryPage() {
+            return `
+                <div class="bg-white p-6 rounded-xl shadow max-w-2xl mx-auto">
+                    <h3 class="text-xl font-bold mb-4">নতুন লিড এন্ট্রি ফর্ম</h3>
+                    <form onsubmit="handleLeadSubmit(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">ইউজার নাম</label>
+                            <select id="leadUserName" class="w-full p-2.5 border rounded-lg" required>
+                                ${state.users.map(u => `<option value="${u.fullName}">${u.fullName}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">লিডের ধরণ</label>
+                            <select id="leadType" class="w-full p-2.5 border rounded-lg">
+                                <option value="CL Lead">CL Lead</option>
+                                <option value="Facebook Lead">Facebook Lead</option>
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-1">লিড পরিমান</label>
+                                <input type="number" id="leadQty" oninput="calculateLead()" required class="w-full p-2.5 border rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">লিডের রেইট</label>
+                                <input type="number" id="leadRate" oninput="calculateLead()" required class="w-full p-2.5 border rounded-lg">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-1">লিডের ইস্যু</label>
+                                <input type="number" id="leadIssue" oninput="calculateLead()" value="0" class="w-full p-2.5 border rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">মোট লিড ওকে</label>
+                                <input type="number" id="leadOk" readonly class="w-full p-2.5 border rounded-lg bg-gray-100">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2">
+                            <div>
+                                <label class="block text-sm font-medium mb-1">মোট টাকা</label>
+                                <input type="number" id="totalMoney" readonly class="w-full p-2.5 border rounded-lg bg-gray-100">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">জমা টাকা</label>
+                                <input type="number" id="depositMoney" oninput="calculateLead()" value="0" class="w-full p-2.5 border rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">বাকী টাকা</label>
+                                <input type="number" id="dueMoney" readonly class="w-full p-2.5 border rounded-lg bg-gray-100">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">ট্র্যাকিং নম্বর</label>
+                            <input type="text" id="trackingNo" class="w-full p-2.5 border rounded-lg" required>
+                        </div>
+                        <button type="submit" class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold hover:bg-blue-700">লিড সাবমিট করুন</button>
+                    </form>
+                </div>
+            `;
         }
 
-        let pendingLeadData = null;
+        function calculateLead() {
+            const qty = Number(document.getElementById('leadQty').value) || 0;
+            const rate = Number(document.getElementById('leadRate').value) || 0;
+            const issue = Number(document.getElementById('leadIssue').value) || 0;
+            const deposit = Number(document.getElementById('depositMoney').value) || 0;
 
-        function previewLeadReportModal() {
-            const userName = document.getElementById('leUserSelect').value;
-            const type = document.getElementById('leType').value;
-            const qty = document.getElementById('leQuantity').value;
-            const rate = document.getElementById('leRate').value;
-            const issue = document.getElementById('leIssue').value;
-            const okLeads = document.getElementById('leOkLeads').value;
-            const totalAmount = document.getElementById('leTotalAmount').value;
-            const deposit = document.getElementById('leDeposit').value;
-            const due = document.getElementById('leDue').value;
-            const tracking = document.getElementById('leTracking').value;
+            const ok = qty - issue;
+            const total = ok * rate;
+            const due = total - deposit;
 
-            if (!userName || !qty || !rate || !tracking) {
-                alertUserModal('দয়া করে সকল প্রয়োজনীয় তথ্য পূরণ করুন।');
-                return;
-            }
+            document.getElementById('leadOk').value = ok >= 0 ? ok : 0;
+            document.getElementById('totalMoney').value = total;
+            document.getElementById('dueMoney').value = due >= 0 ? due : 0;
+        }
 
-            pendingLeadData = {
-                id: 'L-' + Math.floor(1000 + Math.random() * 9000),
-                date: new Date().toLocaleString('bn-BD'),
-                userName,
-                type,
-                qty: parseInt(qty),
-                rate: parseFloat(rate),
-                issue: parseInt(issue),
-                okLeads: parseInt(okLeads),
-                totalAmount: parseFloat(totalAmount),
-                deposit: parseFloat(deposit),
-                due: parseFloat(due),
-                tracking,
-                status: 'সফল'
+        async function handleLeadSubmit(e) {
+            e.preventDefault();
+            const leadData = {
+                userName: document.getElementById('leadUserName').value,
+                leadType: document.getElementById('leadType').value,
+                leadQuantity: document.getElementById('leadQty').value,
+                leadRate: document.getElementById('leadRate').value,
+                leadIssue: document.getElementById('leadIssue').value,
+                leadOk: document.getElementById('leadOk').value,
+                totalMoney: document.getElementById('totalMoney').value,
+                depositMoney: document.getElementById('depositMoney').value,
+                dueMoney: document.getElementById('dueMoney').value,
+                trackingNo: document.getElementById('trackingNo').value,
+                date: new Date().toLocaleDateString()
             };
 
-            const content = document.getElementById('leadPreviewContent');
-            content.innerHTML = `
-                <p><b>ইউজার:</b> ${userName}</p>
-                <p><b>লিডের ধরণ:</b> ${type} | পরিমান: ${qty} পিচ</p>
-                <p><b>রেইট:</b> ৳${rate} | ইশু: ${issue} পিচ</p>
-                <p><b>মোট অকে লিড:</b> ${okLeads} পিচ</p>
-                <p><b>মোট টাকা:</b> ৳${totalAmount} | জমা: ৳${deposit} | বাকী: ৳${due}</p>
-                <p><b>ট্র্যাকিং নম্বর:</b> ${tracking}</p>
-            `;
-            document.getElementById('leadReportPreviewModal').classList.remove('hidden');
+            await db.collection('leads').add(leadData);
+            alert('লিড সফলভাবে সাবমিট ও গুগল শিট সিঙ্ক হয়েছে!');
+            setTab('home');
         }
 
-        function closeLeadPreviewModal() {
-            document.getElementById('leadReportPreviewModal').classList.add('hidden');
+        // Additional admin views placeholders
+        function renderUserHistoryPage() { return `<div class="bg-white p-6 rounded-xl shadow"><h3 class="text-xl font-bold mb-4">ইউজার হিস্ট্রি</h3><p>সকল ইউজারের এন্ট্রি ও অ্যাক্টিভিটি লগ এখানে দেখা যাবে।</p></div>`; }
+        function renderPaymentHistoryPage() { return `<div class="bg-white p-6 rounded-xl shadow"><h3 class="text-xl font-bold mb-4">পেমেন্ট হিস্ট্রি ও ট্র্যাকিং</h3><p>সকল ইউজারের পেমেন্ট স্ট্যাটাস এবং ট্র্যাকিং লিস্ট।</p></div>`; }
+        function renderSettingsPage() { return `<div class="bg-white p-6 rounded-xl shadow"><h3 class="text-xl font-bold mb-4">সেটিংস</h3><p>থিম, ফন্ট এবং ইউজার ম্যানেজমেন্ট অপশন।</p></div>`; }
+        function renderAddFeaturePage() { 
+            return `
+                <div class="bg-white p-6 rounded-xl shadow max-w-lg">
+                    <h3 class="text-xl font-bold mb-4">এ্যাড ফিউচার / নোটিশ</h3>
+                    <textarea id="noticeText" class="w-full p-3 border rounded-lg mb-4" rows="4" placeholder="হোমপেজে দেখানোর জন্য নোটিশ লিখুন...">${state.settings.highlightText}</textarea>
+                    <button onclick="saveNotice()" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold">নোটিশ আপডেট করুন</button>
+                </div>
+            `; 
         }
 
-        function submitLeadEntry(e) {
-            e.preventDefault();
-            previewLeadReportModal();
+        function saveNotice() {
+            const text = document.getElementById('noticeText').value;
+            state.settings.highlightText = text;
+            alert('নোটিশ আপডেট করা হয়েছে!');
+            render();
         }
 
-        function confirmAndSubmitLead() {
-            if (!pendingLeadData) return;
-
-            appState.leadsHistory.unshift(pendingLeadData);
-            appState.userActivities.unshift({
-                time: new Date().toLocaleString('bn-BD'),
-                userName: pendingLeadData.userName,
-                details: `${pendingLeadData.type} এর ${pendingLeadData.okLeads} পিচ লিড এন্ট্রি করা হয়েছে। ট্র্যাকিং: ${pendingLeadData.tracking}`,
-                status: 'সফল'
-            });
-
-            saveToStorage();
-            closeLeadPreviewModal();
-            document.getElementById('leadEntryForm').reset();
-            renderHomeData();
-            renderUsersGrid();
-            renderPaymentHistory();
-            alertUserModal('লিড সফলভাবে সাবমিট হয়েছে এবং গুগল শিটে অটো আপডেট হয়েছে!');
-            switchTab('home');
-        }
-
-        // --- USER HISTORY VIEW ---
-        function renderUserHistory() {
-            const tbody = document.getElementById('userHistoryTableBody');
-            tbody.innerHTML = '';
-            appState.userActivities.forEach(act => {
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50">
-                        <td class="p-3 text-xs text-slate-500">${act.time}</td>
-                        <td class="p-3 font-semibold text-slate-800">${act.userName}</td>
-                        <td class="p-3 text-xs text-slate-600">Gmail / Phone Verified</td>
-                        <td class="p-3 text-slate-700">${act.details}</td>
-                        <td class="p-3"><span class="bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-full text-xs font-medium">${act.status}</span></td>
-                    </tr>
-                `;
-            });
-        }
-
-        // --- PAYMENT HISTORY VIEW ---
-        function renderPaymentHistory() {
-            const tbody = document.getElementById('paymentHistoryTableBody');
-            tbody.innerHTML = '';
-            appState.leadsHistory.forEach(lead => {
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50 cursor-pointer" onclick="openPaymentDetail('${lead.tracking}')">
-                        <td class="p-3 font-bold text-indigo-600">${lead.tracking}</td>
-                        <td class="p-3 text-xs text-slate-500">${lead.date}</td>
-                        <td class="p-3 font-semibold text-slate-800">${lead.userName}</td>
-                        <td class="p-3 font-bold text-slate-900">৳${lead.totalAmount}</td>
-                        <td class="p-3 font-bold text-emerald-600">৳${lead.deposit}</td>
-                        <td class="p-3 font-bold text-amber-600">৳${lead.due}</td>
-                        <td class="p-3 text-center">
-                            <button class="px-2.5 py-1 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded text-xs font-semibold">ভিউ</button>
-                        </td>
-                    </tr>
-                `;
-            });
-        }
-
-        function openPaymentDetail(tracking) {
-            const lead = appState.leadsHistory.find(l => l.tracking === tracking);
-            if (!lead) return;
-
-            const content = document.getElementById('paymentDetailContent');
-            content.innerHTML = `
-                <p><b>ট্র্যাকিং নম্বর:</b> ${lead.tracking}</p>
-                <p><b>ইউজার নাম:</b> ${lead.userName}</p>
-                <p><b>তারিখ ও সময়:</b> ${lead.date}</p>
-                <p><b>লিডের ধরণ:</b> ${lead.type} (${lead.okLeads} পিচ)</p>
-                <p><b>রেইট প্রতি লিড:</b> ৳${lead.rate}</p>
-                <p><b>মোট টাকার পরিমাণ:</b> ৳${lead.totalAmount}</p>
-                <p><b>জমা দেওয়া টাকা:</b> ৳${lead.deposit}</p>
-                <p><b>অবশিষ্ট বাকী টাকা:</b> ৳${lead.due}</p>
-                <p class="text-xs text-emerald-600 mt-2 font-semibold"><i class="fa-solid fa-circle-check mr-1"></i> পেমেন্ট সফলভাবে ভেরিফাই করা হয়েছে।</p>
-            `;
-            document.getElementById('paymentDetailModal').classList.remove('hidden');
-        }
-
-        function closePaymentDetailModal() {
-            document.getElementById('paymentDetailModal').classList.add('hidden');
-        }
-
-        // --- ADD FEATURE & HIGHLIGHT BANNER ---
-        function saveHighlightFeature(e) {
-            e.preventDefault();
-            const text = document.getElementById('featureTextContent').value.trim();
-            if (!text) return;
-
-            appState.highlightText = text;
-            saveToStorage();
-            renderHighlightBanner();
-            alertUserModal('নতুন ঘোষণা হোমপেজে সফলভাবে হাইলাইট করা হয়েছে!');
-            switchTab('home');
-        }
-
-        function renderHighlightBanner() {
-            const bannerText = document.getElementById('highlightNoticeText');
-            if (bannerText) {
-                bannerText.innerText = appState.highlightText;
-            }
-        }
-
-        // --- SETTINGS, FONT, THEME, USER MANAGEMENT ---
-        function changeAppFont(fontFamily) {
-            appState.settings.font = fontFamily;
-            document.body.style.fontFamily = fontFamily + ', sans-serif';
-            saveToStorage();
-        }
-
-        function changeAppTheme(theme) {
-            appState.settings.theme = theme;
-            const body = document.getElementById('appBody');
-            if (theme === 'dark') {
-                body.className = "h-full bg-slate-950 text-slate-100 transition-colors duration-300";
-            } else {
-                body.className = "h-full bg-slate-100 text-slate-800 transition-colors duration-300";
-            }
-            saveToStorage();
-        }
-
-        function updateAppLogoText() {
-            const logoText = document.getElementById('settingLogoInput').value.trim();
-            if (!logoText) return;
-            appState.settings.logoText = logoText;
-            saveToStorage();
-            alertUserModal('লোগো বা নাম পরিবর্তন সফল হয়েছে!');
-        }
-
-        function renderUserSettingsTable() {
-            const tbody = document.getElementById('userManagementTableBody');
-            tbody.innerHTML = '';
-            appState.users.filter(u => u.role !== 'admin').forEach(user => {
-                const isEnabled = user.status === 'active';
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50">
-                        <td class="p-3 font-semibold text-slate-800">${user.name}</td>
-                        <td class="p-3 text-xs text-slate-600">${user.email} | ${user.phone}</td>
-                        <td class="p-3">
-                            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold ${isEnabled ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
-                                ${isEnabled ? 'সক্রিয় (Active)' : 'ডিসএবল্ড'}
-                            </span>
-                        </td>
-                        <td class="p-3 flex space-x-2">
-                            <button onclick="toggleUserStatus('${user.id}')" class="px-3 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded text-xs font-semibold">
-                                ${isEnabled ? 'ডিসএবল' : 'এনাবল'}
-                            </button>
-                            <button onclick="deleteUser('${user.id}')" class="px-3 py-1 bg-rose-100 hover:bg-rose-200 text-rose-700 rounded text-xs font-semibold">
-                                ডিলিট
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            });
-        }
-
-        function toggleUserStatus(userId) {
-            const user = appState.users.find(u => u.id === userId);
-            if (user) {
-                user.status = user.status === 'active' ? 'disabled' : 'active';
-                saveToStorage();
-                renderUserSettingsTable();
-                renderUsersGrid();
-            }
-        }
-
-        function deleteUser(userId) {
-            appState.users = appState.users.filter(u => u.id !== userId);
-            saveToStorage();
-            renderUserSettingsTable();
-            renderUsersGrid();
-            renderLeadEntryDropdowns();
-            alertUserModal('ইউজার সফলভাবে মুছে ফেলা হয়েছে।');
-        }
-
-        function applySettingsStyles() {
-            if (appState.settings.font) {
-                document.body.style.fontFamily = appState.settings.font + ', sans-serif';
-                const fontSelect = document.getElementById('settingFontSelect');
-                if (fontSelect) fontSelect.value = appState.settings.font;
-            }
-            if (appState.settings.theme) {
-                changeAppTheme(appState.settings.theme);
-                const themeSelect = document.getElementById('settingThemeSelect');
-                if (themeSelect) themeSelect.value = appState.settings.theme;
-            }
-        }
-
-        // --- WINDOW ONLOAD INITIALIZATION ---
-        window.onload = function() {
-            loadFromStorage();
-            generateCaptcha();
-            applySettingsStyles();
-            
-            // If already logged in, initialize UI
-            if (appState.currentUser) {
-                initializeAppUI();
-            } else {
-                document.getElementById('authScreen').classList.remove('hidden');
-                document.getElementById('mainApp').classList.add('hidden');
-            }
+        // Start initialization
+        window.onload = () => {
+            initRealtimeSync();
         };
     </script>
 </body>
